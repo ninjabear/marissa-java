@@ -4,17 +4,19 @@
 
 ## Config
 
-```
+```{json}
 {
-    "core":{
-	    "userid":"***@chat.hipchat.com",
-		"password":"***",
-		"nickname":"Mars","joinroom":"***"
-	},
-	"bingsearch":{
-	    "appid":"***"
-	},
-	"giphysearch":{
-	    "apikey":"***"}
-	}
+  "core":{
+    "userid":"***@chat.hipchat.com",
+    "password":"***",
+    "nickname":"Mars",
+    "joinroom":"***"
+  },
+  "bingsearch":{
+    "appid":"***"
+  },
+  "giphysearch":{
+    "apikey":"***"
+  }
+}
 ```
