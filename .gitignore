@@ -1,0 +1,7 @@
+/.nb-gradle/
+/build/
+.gradle/
+.idea
+*.iml
+
+persist.json
