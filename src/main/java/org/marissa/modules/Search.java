@@ -14,7 +14,7 @@ public class Search {
 
     protected static class SearchQuery {
 
-        public static enum Type {
+        public enum Type {
             Image,
             Web
         }

@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class GiphySearch {
 
@@ -62,11 +63,9 @@ public class GiphySearch {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode node = objectMapper.readTree(json);
 
-        List<String> results = new ArrayList<>();
-
-        for (JsonNode origs : node.findValues("original")) {
-            results.add(origs.findValue("url").asText());
-        }
+        List<String> results = node.findValues("original").stream()
+                .map(origs -> origs.findValue("url").asText())
+                .collect(Collectors.toList());
 
         LoggerFactory.getLogger(GiphySearch.class).info(String.join("\n", results));
 

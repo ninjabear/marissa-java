@@ -10,9 +10,7 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-/**
- * Created by Ed on 06/12/2015.
- */
+
 public class PersistTest {
 
     @Test

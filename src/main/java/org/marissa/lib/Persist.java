@@ -9,9 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
-/**
- * Created by Ed on 06/12/2015.
- */
+
 public class Persist {
 
     private static final String CONFIG_FILENAME = "persist.json";
