@@ -5,19 +5,18 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Random;
 import org.marissa.lib.Response;
+import org.slf4j.LoggerFactory;
 
 
 public class MiscUtils {
     
     private MiscUtils() {}
     
-    @Suspendable
     public static void tellTheTime(String trigger, Response response)
     {
         response.send(LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEE dd MMM yyyy -- HH:mm.ss")));
     }
     
-    @Suspendable
     public static void selfie(String trigger, Response response)
     {
         String[] selfies = {
@@ -37,16 +36,16 @@ public class MiscUtils {
         response.send(selfies[selfieNo]);                
     }
     
-    @Suspendable
     public static void ping(String trigger, Response response)
     {
         response.send("pong");
     }
     
-    @Suspendable
+
     public static void echo(String trigger, Response response)
     {
-        response.send(trigger);
+        LoggerFactory.getLogger(MiscUtils.class).info("echoing '" + trigger + "'");
+        response.send(trigger.replaceFirst("[^\\s]+\\s+echo\\s+", ""));
     }
     
 }

@@ -30,7 +30,7 @@ public class Main {
         router.on(".*time.*", MiscUtils::tellTheTime);
         router.on("selfie", MiscUtils::selfie);
         router.on("ping", MiscUtils::ping);
-        router.on("echo", MiscUtils::echo);
+        router.on("echo.*", MiscUtils::echo);
 
         router.on("define\\s+.*", Define::defineWord);
 
