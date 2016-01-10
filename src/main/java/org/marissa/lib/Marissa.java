@@ -102,7 +102,8 @@ public class Marissa {
                     if (mi != null && !mi.getMessage().getFrom().getResource().equals(nickname)) {
                         rxChannel.send(makeChannelEvent(mi.getMessage()));
                     } else {
-                        log.warn("ignored null message in inbound message listener");
+                        //log.warn("ignored null message in inbound message listener");
+                        //this usually means marissa sent the message herself
                     }
                 } catch (SuspendExecution | InterruptedException x) {
                     die("error - suspended or interrupted");
