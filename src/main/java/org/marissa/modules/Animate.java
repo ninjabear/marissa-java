@@ -1,12 +1,14 @@
 package org.marissa.modules;
 
 import org.marissa.lib.Response;
+import org.marissa.modules.bingsearch.BingSearch;
 import org.marissa.modules.giphy.GiphySearch;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,9 +27,26 @@ public class Animate {
                 return;
             }
 
+            if (results.isEmpty())
+            {
+                // lets check bing too
+                LoggerFactory.getLogger(Animate.class).info("giphy gave nothing, falling through to bing");
+
+                try {
+                    results = BingSearch.animatedSearch(qry.get());
+                } catch (IOException e) {
+                    response.send("Oops. Some kind of IO error?");
+                    LoggerFactory.getLogger(Animate.class).error("IO Error on bing animated", e);
+                    return;
+                }
+            }
+
             if (results.isEmpty()) {
                 response.send("Sorry.. no results");
             } else {
+                // pick a random
+                // this is actually pretty annoying as they're sorted by relevance
+                //int choice = new Random(System.nanoTime()).nextInt(results.size());
                 response.send(results.get(0));
             }
         } else {
