@@ -40,7 +40,7 @@ test {
 }
 
 run {
-    jvmArgs "-javaagent:${configurations.quasar.iterator().next()}",  "-Dco.paralleluniverse.fibers.verifyInstrumentation=true" // gradle should make this simpler, too
+    jvmArgs "-javaagent:${configurations.quasar.iterator().next()}",  "-Dco.paralleluniverse.fibers.verifyInstrumentation=true" // gradle should makeChannelEvent this simpler, too
 }
 
 // converts Gradle dependencies to Capsule dependencies

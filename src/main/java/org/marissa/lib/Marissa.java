@@ -1,10 +1,11 @@
 package org.marissa.lib;
 
 import co.paralleluniverse.fibers.SuspendExecution;
-import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.strands.channels.Channel;
 import co.paralleluniverse.strands.channels.Channels;
 import co.paralleluniverse.strands.channels.SelectAction;
+import org.marissa.lib.model.ChannelEvent;
+import org.marissa.lib.model.ControlEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rocks.xmpp.core.Jid;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 
 import static co.paralleluniverse.strands.channels.Selector.receive;
 import static co.paralleluniverse.strands.channels.Selector.select;
+import static org.marissa.lib.XMPPChannelEventFactory.makeChannelEvent;
 
 public class Marissa {
 
@@ -36,8 +38,9 @@ public class Marissa {
     private final String nickname;
 
     private XmppSession xmppSession;
-    private Channel<Message> rxChannel = Channels.newChannel(0);
-    private Channel<Message> txChannel = Channels.newChannel(0);
+    private Channel<ChannelEvent> rxChannel  = Channels.newChannel(0);
+    private Channel<ChannelEvent> txChannel  = Channels.newChannel(0);
+    private Channel<ChannelEvent> ctlChannel = Channels.newChannel(0);
 
     private Logger log = LoggerFactory.getLogger(Marissa.class);
 
@@ -65,6 +68,14 @@ public class Marissa {
         xmppSession.send(new Presence());
     }
 
+    public void onQuit() {
+        try {
+            ctlChannel.send(new ChannelEvent(ChannelEvent.EventType.CONTROL, new ControlEvent(ControlEvent.Type.QUIT, "Program aborted")));
+        } catch (SuspendExecution | InterruptedException x) {
+            log.error("failed to pipe quit message", x); // I think according to the docs this is just a marker and cannot happen but.. maybe
+        }
+    }
+
     private void die(String reason) {
         log.info("died:" + reason == null ? "" : reason);
         try {
@@ -89,7 +100,7 @@ public class Marissa {
             cr.addInboundMessageListener(mi -> {
                 try {
                     if (mi != null && !mi.getMessage().getFrom().getResource().equals(nickname)) {
-                        rxChannel.send(mi.getMessage());
+                        rxChannel.send(makeChannelEvent(mi.getMessage()));
                     } else {
                         log.warn("ignored null message in inbound message listener");
                     }
@@ -132,23 +143,35 @@ public class Marissa {
 
         log.info("Joined room(s) " + String.join(", ", joinedRooms.keySet()));
 
-        for (;;) {
-            SelectAction<Message> sa = select(receive(rxChannel), receive(txChannel));
-            Message x = sa.message();
-            switch(sa.index())
+        boolean isLive = true;
+        while (isLive) {
+            // TODO can probably flick this to a single event stream now rather than multiple channels
+            SelectAction<ChannelEvent> sa = select(receive(rxChannel), receive(txChannel), receive(ctlChannel));
+            ChannelEvent evt = sa.message();
+            if (ChannelEvent.EventType.CONTROL.equals(evt.getEventType()))
             {
-                case 0:
-                    router.triggerHandlersForMessageText(x.getBody(), new Response(x.getFrom(), txChannel));
-                    break;
-                case 1:
-                    ChatRoom cr = joinedRooms.get(x.getTo().getLocal());
-                    if (cr!=null) {
-                        cr.sendMessage(x.getBody());
-                    }
-                    else {
-                        log.error("chatroom isn't joined; " + x.getTo().getLocal());
-                    }
-                    break;
+                ControlEvent ctlEvt = (ControlEvent)evt.getPayload();
+                if (ControlEvent.Type.QUIT.equals(ctlEvt.getType()))
+                {
+                    die(ctlEvt.getAdditionalInfo());
+                    isLive = false;
+                }
+            }
+            else if (ChannelEvent.EventType.XMPP.equals(evt.getEventType())) {
+                Message message = (Message)evt.getPayload();
+                switch (sa.index()) {
+                    case 0:
+                        router.triggerHandlersForMessageText(message.getBody(), new Response(message.getFrom(), txChannel));
+                        break;
+                    case 1:
+                        ChatRoom cr = joinedRooms.get(message.getTo().getLocal());
+                        if (cr != null) {
+                            cr.sendMessage(message.getBody());
+                        } else {
+                            log.error("chatroom isn't joined; " + message.getTo().getLocal());
+                        }
+                        break;
+                }
             }
         }
     }

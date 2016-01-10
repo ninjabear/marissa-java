@@ -11,6 +11,8 @@ import org.marissa.modules.MiscUtils;
 import org.marissa.modules.Search;
 import org.marissa.modules.define.Define;
 import org.marissa.modules.scripting.ScriptEngine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import rocks.xmpp.core.XmppException;
 
 
@@ -36,16 +38,28 @@ public class Main {
 
         router.on("(search|image)\\s+.*", Search::search);
         router.on("animate\\s+.*", Animate::search);
-        
-        router.on(".*", ScriptEngine::all);
 
-        new Marissa(username, password, nickname)
-            .connect()
-            .activate(
-                new ArrayList<String>() {{
-                    add(joinRoom);
-                }}, router
-            );
+        // TODO we can do something with this later
+        // router.on(".*", ScriptEngine::all);
+
+        Marissa marissa = new Marissa(username, password, nickname);
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+                                                 @Override
+                                                 public void run() {
+                                                     Logger l = LoggerFactory.getLogger(Main.class);
+                                                     l.debug("Shutdown hook triggered");
+                                                     marissa.onQuit();
+                                                     l.debug("Shutdown hook completed");
+                                                 }
+                                             });
+
+        LoggerFactory.getLogger(Main.class).info("Launching...");
+
+        marissa.connect()
+               .activate(new ArrayList<String>() {{ add(joinRoom); }},
+                         router);
+
     }
     
 }

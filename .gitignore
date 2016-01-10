@@ -5,3 +5,9 @@
 *.iml
 
 persist.json
+
+gradle/
+gradlew
+gradlew.bat
+
+

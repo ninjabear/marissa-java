@@ -7,6 +7,7 @@ import co.paralleluniverse.strands.channels.Channel;
 import co.paralleluniverse.strands.channels.Channels;
 import org.junit.Before;
 import org.junit.Test;
+import org.marissa.lib.model.ChannelEvent;
 import rocks.xmpp.core.Jid;
 import rocks.xmpp.core.stanza.model.client.Message;
 
@@ -20,7 +21,7 @@ public class RouterTest {
 
     private Router r;
     private Timeout defaultTimeout;
-    private Channel<Message> dummy;
+    private Channel<ChannelEvent> dummy;
 
     @Before
     public void setUp() throws Exception {
