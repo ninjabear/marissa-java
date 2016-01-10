@@ -1,6 +1,5 @@
 package org.marissa.modules.bingsearch;
 
-import com.sun.corba.se.impl.naming.pcosnaming.PersistentBindingIterator;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -14,7 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.List;
 
 public class BingSearch {
