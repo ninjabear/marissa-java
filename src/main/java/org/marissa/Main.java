@@ -5,10 +5,7 @@ import java.util.ArrayList;
 import org.marissa.lib.Marissa;
 import org.marissa.lib.Persist;
 import org.marissa.lib.Router;
-import org.marissa.modules.Animate;
-import org.marissa.modules.Cat;
-import org.marissa.modules.MiscUtils;
-import org.marissa.modules.Search;
+import org.marissa.modules.*;
 import org.marissa.modules.define.Define;
 import org.marissa.modules.scripting.ScriptEngine;
 import org.slf4j.Logger;
@@ -27,7 +24,8 @@ public class Main {
 
         Router router = new Router( "(?i)@?"+nickname );
 
-        router.whenContains(".*cat.*", new Cat()::routingEvent);
+        //no cats
+        //router.whenContains(".*cat.*", new Cat()::routingEvent);
 
         router.on(".*time.*", MiscUtils::tellTheTime);
         router.on("selfie", MiscUtils::selfie);
@@ -38,6 +36,15 @@ public class Main {
 
         router.on("(search|image)\\s+.*", Search::search);
         router.on("animate\\s+.*", Animate::search);
+
+        router.on("[-+]\\d+", Score::scoreChange);
+        router.on("score", Score::scores);
+        router.whenContains("[-+]\\d+\\s+(?i)@?"+nickname,
+                            (trigger,response) -> {
+                                String noNick = trigger.replaceAll("(?i)@?"+nickname, "");
+                                Score.scoreChange(noNick, response);
+                            });
+
 
         // TODO we can do something with this later
         // router.on(".*", ScriptEngine::all);
