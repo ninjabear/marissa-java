@@ -26,7 +26,7 @@ public class RouterTest {
     @Before
     public void setUp() throws Exception {
         r = new Router(Pattern.quote("@Mars"));
-        defaultTimeout = new Timeout(300, TimeUnit.MILLISECONDS);
+        defaultTimeout = new Timeout(3000, TimeUnit.MILLISECONDS);
         dummy = Channels.newChannel(0);
     }
 

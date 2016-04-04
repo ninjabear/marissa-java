@@ -1,0 +1,14 @@
+language: java
+jdk:
+- oraclejdk8
+before_deploy: gradle capsule
+deploy:
+  provider: releases
+  api_key:
+    secure: OPjTLqyMr2iEahVb2jWiJWW35ilSBXimJbfoqRUfXa3tzN1LJPbeT2s91xFZMMPXEpPdwpOEOlzttZeEehQQOeL4gs8Qvm+FOGG+0S02F0MRe9ug0/sOmiXQuUvwY5bSiVKwVBAOU0h095Z5uwosv9lF5y++pPC3qa+cFpMQ6jT4OvlbkL25uSN4SzWrD5w0RGBAZtbwdS9/oho6dDU0YVNja0rSCwkDvVuVQ8oz3kKiD9KCiU8MtJcuDC6NVayRSXvKNaDWiaa8GQ+hUda8GHVHlN2mQezey9V2m6o6EUG9ktqcr6VdcgAH5a2uGDY1IVyBBxhQASrAAwMzNuDLhRWSTyC/5LrMqes2VahePP+1F8bc7gliCOt/vrNkzfPNE3dSOhv5a6n4P95+XntTmCJsdpJNZ5Ztivd5oy+XpMg3c0374Cwt/dJAptKaFIOvu7uiA+PSV1LvqcEdF0V0Chw2D+M4t5AGEvF25pmP2SAK1rvZipx6n02mP8ZUhnCLAe+Mc/4kV3C3ld/IDFvWmfkFX2jzFxXdEbrWKsiKa4zVL05ttY3qt/Fjy7/A8B4AD/ffM9ciQv2Tjt7ATiM5kJuaEpops9UPjYNJBm1l0xPIMAOhTNJKkBxzjboKdTb/s7zjJNoedsr4Yfw02WHDovv8iiESyP1wgHuDoXpgq1w=
+  file: ./build/libs/marissa-capsule.jar
+  skip_cleanup: true
+  on:
+    repo: ninjabear/marissa-java
+    tags: true
+
