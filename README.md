@@ -1,4 +1,5 @@
-# marissa-java [![Travis](https://img.shields.io/travis/ninjabear/marissa-java.svg)]() [![GitHub release](https://img.shields.io/github/release/ninjabear/marissa-java.svg)]() [![GitHub license](https://img.shields.io/github/license/ninjabear/marissa-java.svg)]()
+# marissa-java [![Build Status](https://travis-ci.org/ninjabear/marissa-java.svg?branch=master)](https://travis-ci.org/ninjabear/marissa-java) [![GitHub](http://img.shields.io/github/release/ninjabear/marissa-java.svg)](https://github.com/ninjabear/marissa-java/releases) [![GitHub license](https://img.shields.io/github/license/ninjabear/marissa-java.svg)](/LICENCE)
+
 
 A Java8 hipchat bot
 
@@ -7,12 +8,13 @@ A Java8 hipchat bot
 |Command                | Result                                                   |
 |-----------------------|----------------------------------------------------------|
 |marissa time           | Returns the time                                         |
-|marissa echo <text>    | Echo given <text>                                        |
-|marissa animate <text> | Find an animated gif for <text>                          |
-|marissa image <text>   | Find an image for <text>                                 |
-|marissa search <text>  | Search the web and return the best result for <text>     |
+|marissa echo `<text>`  | Echo given `<text>`                                      |
+|marissa animate `<text>`| Find an animated gif for `<text>`                        |
+|marissa image `<text>` | Find an image for `<text>`                               |
+|marissa search `<text>`| Search the web and return the best result for `<text>`   |
 |marissa selfie         | Sends you a selfie                                       |
 |marissa score          | Returns the current score marissa has. You can reward marissa with marissa +1 (or marissa +100), or punish marissa with marissa -1 (or -100..) |
+|marissa define `<text>`| Define a word or phrase using urbandictionary            |
 
 
 # Set up
