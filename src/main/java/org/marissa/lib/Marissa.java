@@ -13,6 +13,7 @@ import rocks.xmpp.core.XmppException;
 import rocks.xmpp.core.session.NoResponseException;
 import rocks.xmpp.core.session.XmppSession;
 import rocks.xmpp.core.session.XmppSessionConfiguration;
+import rocks.xmpp.core.stanza.MessageListener;
 import rocks.xmpp.core.stanza.model.client.Message;
 import rocks.xmpp.core.stanza.model.client.Presence;
 import rocks.xmpp.extensions.muc.ChatRoom;
@@ -34,55 +35,77 @@ public class Marissa {
 
     private final String username;
     private final String password;
-    private final Map<String, ChatRoom> joinedRooms;
     private final String nickname;
+
+    private final List<String> rooms;
+    private final Map<String, ChatRoom> joinedRooms;
 
     private XmppSession xmppSession;
     private Channel<ChannelEvent> rxChannel  = Channels.newChannel(0);
     private Channel<ChannelEvent> txChannel  = Channels.newChannel(0);
     private Channel<ChannelEvent> ctlChannel = Channels.newChannel(0);
 
-    private Logger log = LoggerFactory.getLogger(Marissa.class);
+    private final Logger log = LoggerFactory.getLogger(Marissa.class);
+    private final MessageListener listener;
 
+    public Marissa(String username, String password, String nickname, final List<String> joinRooms) {
 
-    public Marissa(String username, String password, String nickname)
-    {
         this.username = username;
         this.password = password;
-        joinedRooms = new HashMap<>();
+        this.joinedRooms = new HashMap<>();
         this.nickname = nickname;
+        this.rooms = joinRooms;
+
+        this.listener = mi -> {
+            try {
+
+                if(mi == null) {
+                    return;
+                }
+
+                String sender = mi.getMessage().getFrom().getResource();
+
+                if (!sender.equals(nickname)) {
+                    rxChannel.send(makeChannelEvent(mi.getMessage()));
+                }
+
+            } catch (SuspendExecution | InterruptedException x) {
+                die("error - suspended or interrupted");
+                log.error("died because of interruption", x);
+                throw new IllegalStateException("can't suspend or be interrupted here", x);
+            } catch(Throwable t) {
+                die("error - unexpected item in the bagging area");
+                log.error("Time, to die.", t);
+                throw new IllegalStateException("can't suspend or be interrupted here", t);
+            }
+        };
+
     }
 
-    private void setup() throws XmppException {
-        // turn on debug mode like this
-        /*
-        XmppSessionConfiguration configuration = XmppSessionConfiguration.builder()
-                                                                         .debugger(ConsoleDebugger.class)
-                                                                         .build();
-
-        */
-
-        xmppSession = new XmppSession("chat.hipchat.com", XmppSessionConfiguration.getDefault());
-        xmppSession.connect();
-        xmppSession.login(username, password);
-        xmppSession.send(new Presence());
-    }
-
-    public void onQuit() {
+    public void disconnect() {
         try {
-            ctlChannel.send(new ChannelEvent(ChannelEvent.EventType.CONTROL, new ControlEvent(ControlEvent.Type.QUIT, "Program aborted")));
+            ctlChannel.send(
+                    new ChannelEvent(ChannelEvent.EventType.CONTROL,
+                            new ControlEvent(ControlEvent.Type.QUIT, "Program aborted"))
+            );
         } catch (SuspendExecution | InterruptedException x) {
-            log.error("failed to pipe quit message", x); // I think according to the docs this is just a marker and cannot happen but.. maybe
+            // I think according to the docs this is just a marker and cannot happen but.. maybe
+            log.error("failed to pipe quit message", x);
         }
     }
 
     private void die(String reason) {
+
         log.info("died:" + reason == null ? "" : reason);
+
         try {
-            if (xmppSession.isConnected())
+
+            if (xmppSession.isConnected()) {
                 xmppSession.send(new Presence(Presence.Type.UNAVAILABLE));
+            }
 
             xmppSession.close();
+
         } catch (XmppException e) {
             log.error("failed to die cleanly", e);
             throw new IllegalStateException("failed to die cleanly (with presence)");
@@ -90,76 +113,125 @@ public class Marissa {
     }
 
     private void joinRooms(final List<String> joinRooms) throws XmppException {
+
         MultiUserChatManager m = xmppSession.getManager(MultiUserChatManager.class);
         ChatService chatService = m.createChatService(Jid.valueOf("conf.hipchat.com"));
+
+        // leave any rooms we're already in
+
+        this.joinedRooms.values().stream().forEach(room -> {
+            try {
+                room.removeInboundMessageListener(this.listener);
+                room.exit();
+            } catch(Exception e) {
+                log.warn("Failed to leave room");
+            }
+        });
+
+        // ok now join the other rooms
 
         for(String room : joinRooms) {
 
             ChatRoom cr = chatService.createRoom(room);
 
-            cr.addInboundMessageListener(mi -> {
-                try {
-                    if (mi != null && !mi.getMessage().getFrom().getResource().equals(nickname)) {
-                        rxChannel.send(makeChannelEvent(mi.getMessage()));
-                    } else {
-                        //log.warn("ignored null message in inbound message listener");
-                        //this usually means marissa sent the message herself
-                    }
-                } catch (SuspendExecution | InterruptedException x) {
-                    die("error - suspended or interrupted");
-                    log.error("died because of interruption", x);
-                    throw new IllegalStateException("can't suspend or be interrupted here", x);
-                }
-            });
+            cr.addInboundMessageListener(listener);
 
             try {
                 cr.enter(nickname, History.forMaxMessages(0));
-            } catch (NoResponseException e)
-            {
+            } catch (NoResponseException e) {
                 log.error("couldn't connect to room '" + room + "'", e);
                 throw new IllegalArgumentException("couldn't join room '"+room+"'", e);
             }
 
             joinedRooms.put(room, cr);
+
         }
     }
 
-    public Marissa connect() throws XmppException {
-        setup();
-        return this;
-    }
+    public void activate(final Router router) throws XmppException, InterruptedException, SuspendExecution {
 
-    public void activate(final List<String> joinRooms, final Router router) throws XmppException, InterruptedException, SuspendExecution {
-        joinRooms(joinRooms);
+        // connect to xmpp
+
+        XmppSessionConfiguration configuration = XmppSessionConfiguration.builder().build();
+
+        xmppSession = new XmppSession("chat.hipchat.com", configuration);
+        xmppSession.connect();
+        xmppSession.login(username, password);
+        xmppSession.send(new Presence());
+
+        // join the rooms
+
+        joinRooms(this.rooms);
+
+        // send a welcome message
 
         joinedRooms.values().stream()
-                .forEach(cr -> {
-                            String peeps = String.join(", ", cr.getOccupants().stream()
-                                    .filter(x -> !x.isSelf())
-                                    .map(Occupant::getNick)
-                                    .collect(Collectors.toList()));
-                            cr.sendMessage("Hey " + peeps);
-                        }
-                );
+            .forEach(cr -> {
+                String peeps = String.join(", ", cr.getOccupants().stream()
+                    .filter(x -> !x.isSelf())
+                    .map(Occupant::getNick)
+                    .collect(Collectors.toList()));
+                cr.sendMessage("Hey " + peeps);
+            });
 
         log.info("Joined room(s) " + String.join(", ", joinedRooms.keySet()));
 
+        // reconnect listener
+
+        xmppSession.addSessionStatusListener(e -> {
+
+            if (e.getStatus() == XmppSession.Status.AUTHENTICATED) {
+
+                try {
+                    joinRooms(this.rooms);
+                } catch (XmppException e1) {
+                    e1.printStackTrace();
+                }
+
+            } else {
+
+                log.info("Received unhandled session status: " + e.getStatus());
+
+            }
+
+        });
+
+        selectMessageLoop(router);
+
+    }
+
+    private void selectMessageLoop(final Router router) throws SuspendExecution, InterruptedException {
+
+        // message listener
+
         boolean isLive = true;
+
         while (isLive) {
+
             // TODO can probably flick this to a single event stream now rather than multiple channels
-            SelectAction<ChannelEvent> sa = select(receive(rxChannel), receive(txChannel), receive(ctlChannel));
+            // TODO can we do all this just with the ChatRoom add inbound message listener method?
+
+            SelectAction<ChannelEvent> sa = select(
+                 receive(rxChannel),
+                 receive(txChannel),
+                 receive(ctlChannel)
+            );
+
             ChannelEvent evt = sa.message();
-            if (ChannelEvent.EventType.CONTROL.equals(evt.getEventType()))
-            {
+
+            if (ChannelEvent.EventType.CONTROL.equals(evt.getEventType())) {
+
                 ControlEvent ctlEvt = (ControlEvent)evt.getPayload();
-                if (ControlEvent.Type.QUIT.equals(ctlEvt.getType()))
-                {
+
+                if (ControlEvent.Type.QUIT.equals(ctlEvt.getType())) {
                     die(ctlEvt.getAdditionalInfo());
                     isLive = false;
                 }
-            }
-            else if (ChannelEvent.EventType.XMPP.equals(evt.getEventType())) {
+
+            } else if (ChannelEvent.EventType.XMPP.equals(evt.getEventType())) {
+
                 Message message = (Message)evt.getPayload();
+
                 switch (sa.index()) {
                     case 0:
                         router.triggerHandlersForMessageText(message.getBody(), new Response(message.getFrom(), txChannel));

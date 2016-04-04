@@ -21,7 +21,8 @@ public class ScriptEngine {
         invocable = (Invocable) engine;
         
         try {
-            
+
+            // TODO: Load all resources not just standard.js
             engine.eval(new InputStreamReader(ScriptEngine.class.getResourceAsStream("/standard.js")));
             
         } catch (ScriptException ex) {
@@ -30,7 +31,7 @@ public class ScriptEngine {
         
     }
     
-    public static void all(String in, Response response) {
+    public static void dispatchToAll(String in, Response response) {
         
         try {
             invocable.invokeFunction("run", in.replaceFirst("mars", ""), response);
