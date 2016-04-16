@@ -25,10 +25,10 @@ public class Main {
 
         Router router = new Router( "(?i)@?"+nickname );
 
-        router.on(".*time.*", MiscUtils::tellTheTime);
-        router.on("selfie", MiscUtils::selfie);
-        router.on("ping", MiscUtils::ping);
-        router.on("echo.*", MiscUtils::echo);
+        router.on(".*time.*", MiscUtilsKt::tellTheTime);
+        router.on("selfie", MiscUtilsKt::selfie);
+        router.on("ping", MiscUtilsKt::ping);
+        router.on("echo.*", MiscUtilsKt::echo);
 
         router.on(".*", ScriptEngine::dispatchToAll);
 
