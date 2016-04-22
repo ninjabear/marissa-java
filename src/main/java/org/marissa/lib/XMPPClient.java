@@ -31,7 +31,7 @@ import static co.paralleluniverse.strands.channels.Selector.receive;
 import static co.paralleluniverse.strands.channels.Selector.select;
 import static org.marissa.lib.XMPPChannelEventFactory.makeChannelEvent;
 
-public class Marissa {
+public class XMPPClient {
 
     private final String username;
     private final String password;
@@ -45,10 +45,10 @@ public class Marissa {
     private Channel<ChannelEvent> txChannel  = Channels.newChannel(0);
     private Channel<ChannelEvent> ctlChannel = Channels.newChannel(0);
 
-    private final Logger log = LoggerFactory.getLogger(Marissa.class);
+    private final Logger log = LoggerFactory.getLogger(XMPPClient.class);
     private final MessageListener listener;
 
-    public Marissa(String username, String password, String nickname, final List<String> joinRooms) {
+    public XMPPClient(String username, String password, String nickname, final List<String> joinRooms) {
 
         this.username = username;
         this.password = password;

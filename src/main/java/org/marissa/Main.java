@@ -4,7 +4,7 @@ import co.paralleluniverse.fibers.SuspendExecution;
 
 import java.util.Arrays;
 
-import org.marissa.lib.Marissa;
+import org.marissa.lib.XMPPClient;
 import org.marissa.lib.Persist;
 import org.marissa.lib.Router;
 import org.marissa.modules.*;
@@ -45,7 +45,7 @@ public class Main {
                                 Score.scoreChange(noNick, response);
                             });
 
-        Marissa marissa = new Marissa(
+        XMPPClient marissa = new XMPPClient(
             username,
             password,
             nickname,

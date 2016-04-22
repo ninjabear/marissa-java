@@ -19,7 +19,7 @@ fun selfie(trigger: String, response: Response) {
             "http://i2.cdn.turner.com/money/dam/assets/130416164248-marissa-mayer-620xa.png",
             "http://wpuploads.appadvice.com/wp-content/uploads/2013/05/marissa-mayer-yahoo-new-c-008.jpg",
             "https://pbs.twimg.com/profile_images/323982494/marissa_new4.jpg",
-            "http://media.idownloadblog.com/wp-content/uploads/2015/01/Marissa-Mayer-Yahoo-001.jpg",
+            "http://media.idownloadblog.com/wp-content/uploads/2015/01/XMPPClient-Mayer-Yahoo-001.jpg",
             "http://women2.com/wp-content/uploads/2012/07/121128_marissa_mayer.jpg"
     )
 
