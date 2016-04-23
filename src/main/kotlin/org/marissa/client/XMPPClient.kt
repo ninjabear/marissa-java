@@ -1,6 +1,5 @@
 package org.marissa.client
 
-import co.paralleluniverse.fibers.SuspendExecution
 import co.paralleluniverse.strands.channels.Channels
 import co.paralleluniverse.strands.channels.Selector.receive
 import co.paralleluniverse.strands.channels.Selector.select
@@ -25,12 +24,15 @@ import rocks.xmpp.extensions.muc.MultiUserChatManager
 import rocks.xmpp.extensions.muc.model.History
 import java.util.*
 
+/**
+ * XMPPClient connects to the Hipchat (XMPP) room, and handles messages to and from the
+ * chat service.
+ */
 class XMPPClient(val connectionDetails : ConnectionDetails) {
 
     val joinedRooms: MutableMap<String, ChatRoom> = HashMap()
     val rxChannel = Channels.newChannel<ChannelEvent<Message>>(0)
     val txChannel = Channels.newChannel<ChannelEvent<Message>>(0)
-    val ctlChannel = Channels.newChannel<ChannelEvent<Message>>(0)
     var xmppSession : XmppSession
 
     val log = LoggerFactory.getLogger(XMPPClient::class.java)
@@ -92,7 +94,6 @@ class XMPPClient(val connectionDetails : ConnectionDetails) {
      * Given a list of rooms, joins them all.
      * We leave any rooms we're currently in before doing this.
      */
-    @Throws(XmppException::class)
     private fun joinRooms(joinRooms: List<String>) {
 
         val m = xmppSession.getManager(MultiUserChatManager::class.java)
@@ -145,7 +146,6 @@ class XMPPClient(val connectionDetails : ConnectionDetails) {
     /**
      * Connect to chat and start handling messages
      */
-    @Throws(XmppException::class, InterruptedException::class, SuspendExecution::class)
     fun activate(router: Router) {
 
         // connect to XMPP
@@ -191,7 +191,10 @@ class XMPPClient(val connectionDetails : ConnectionDetails) {
 
     }
 
-    @Throws(SuspendExecution::class, InterruptedException::class)
+    /**
+     * Blocking loop that selects from the rx/tx/ctl channels and handles the messages
+     * appropriately.
+     */
     private fun selectMessageLoop(router: Router) {
 
         // message listener
@@ -205,8 +208,7 @@ class XMPPClient(val connectionDetails : ConnectionDetails) {
 
             val sa = select(
                 receive(rxChannel),
-                receive(txChannel),
-                receive(ctlChannel)
+                receive(txChannel)
             )
 
             val evt = sa.message()
