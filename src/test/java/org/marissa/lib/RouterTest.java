@@ -1,6 +1,5 @@
 package org.marissa.lib;
 
-import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.strands.Timeout;
 import co.paralleluniverse.strands.channels.Channel;
@@ -8,9 +7,6 @@ import co.paralleluniverse.strands.channels.Channels;
 import org.junit.Before;
 import org.junit.Test;
 import org.marissa.client.ChatMessage;
-import org.marissa.lib.model.ChannelEvent;
-import rocks.xmpp.core.Jid;
-import rocks.xmpp.core.stanza.model.client.Message;
 
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -26,7 +22,13 @@ public class RouterTest {
 
     @Before
     public void setUp() throws Exception {
-        r = new Router(Pattern.quote("@Mars"));
+
+        r = new Router(
+            Pattern.quote("@Mars"),
+            Channels.newChannel(0),
+            Channels.newChannel(0)
+        );
+
         defaultTimeout = new Timeout(3000, TimeUnit.MILLISECONDS);
         dummy = Channels.newChannel(0);
     }

@@ -139,7 +139,7 @@ class XMPPClient(val connectionDetails : ConnectionDetails, val rxChannel : Chan
     /**
      * Connect to chat and start handling messages
      */
-    fun activate() {
+    fun run() {
 
         // connect to XMPP
 
@@ -205,16 +205,6 @@ class XMPPClient(val connectionDetails : ConnectionDetails, val rxChannel : Chan
 
         }
 
-        //            val evt = sa.message()
-        //
-        //            if (ChannelEvent.EventType.XMPP == evt.eventType) {
-        //
-        //                val message = evt.payload
-        //
-        //                when (sa.index()) {
-        //                    0 -> router.triggerHandlersForMessageText(message.body, Response(message.from, txChannel))
-        //                }
-        //            }
     }
 
 }
