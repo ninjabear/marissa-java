@@ -1,40 +1,33 @@
 package org.marissa.client
 
-import co.paralleluniverse.strands.channels.Channels
+import co.paralleluniverse.strands.channels.Channel
 import co.paralleluniverse.strands.channels.Selector.receive
 import co.paralleluniverse.strands.channels.Selector.select
-import org.marissa.lib.Response
-import org.marissa.lib.Router
-import org.marissa.lib.XMPPChannelEventFactory.makeChannelEvent
-import org.marissa.lib.model.ChannelEvent
-import org.marissa.lib.model.ControlEvent
 import org.slf4j.LoggerFactory
 import rocks.xmpp.core.Jid
 import rocks.xmpp.core.XmppException
 import rocks.xmpp.core.session.NoResponseException
 import rocks.xmpp.core.session.XmppSession
 import rocks.xmpp.core.session.XmppSessionConfiguration
+import rocks.xmpp.core.stanza.MessageEvent
 import rocks.xmpp.core.stanza.MessageListener
 import rocks.xmpp.core.stanza.model.AbstractPresence
-import rocks.xmpp.core.stanza.model.client.Message
 import rocks.xmpp.core.stanza.model.client.Presence
 import rocks.xmpp.extensions.muc.ChatRoom
 import rocks.xmpp.extensions.muc.ChatService
 import rocks.xmpp.extensions.muc.MultiUserChatManager
 import rocks.xmpp.extensions.muc.model.History
 import java.util.*
+import kotlin.concurrent.thread
 
 /**
  * XMPPClient connects to the Hipchat (XMPP) room, and handles messages to and from the
  * chat service.
  */
-class XMPPClient(val connectionDetails : ConnectionDetails) {
+class XMPPClient(val connectionDetails : ConnectionDetails, val rxChannel : Channel<ChatMessage>, val txChannel : Channel<ChatMessage>) {
 
     val joinedRooms: MutableMap<String, ChatRoom> = HashMap()
-    val rxChannel = Channels.newChannel<ChannelEvent<Message>>(0)
-    val txChannel = Channels.newChannel<ChannelEvent<Message>>(0)
     var xmppSession : XmppSession
-
     val log = LoggerFactory.getLogger(XMPPClient::class.java)
     val listener: MessageListener
 
@@ -48,15 +41,15 @@ class XMPPClient(val connectionDetails : ConnectionDetails) {
         // amd puts them into the rxChannel if they are directed towards us.
         // TODO: don't check for sender here, this breaks SRP.
 
-        listener = MessageListener { mi ->
+        listener = MessageListener { mi : MessageEvent ->
 
             try {
 
-                val sender = mi.getMessage().getFrom().getResource()
+                val sender = mi.message.from.resource
 
                 if (sender != connectionDetails.nick) {
-                    val m: ChannelEvent<Message> = makeChannelEvent(mi.getMessage())
-                    rxChannel.send(m);
+                    log.info("Received message from: " + mi.message.from.local)
+                    rxChannel.send(ChatMessage(mi.message.from.local.toString() , mi.message.body))
                 }
 
             } catch (t: Throwable) {
@@ -146,7 +139,7 @@ class XMPPClient(val connectionDetails : ConnectionDetails) {
     /**
      * Connect to chat and start handling messages
      */
-    fun activate(router: Router) {
+    fun activate() {
 
         // connect to XMPP
 
@@ -187,58 +180,41 @@ class XMPPClient(val connectionDetails : ConnectionDetails) {
 
         }
 
-        selectMessageLoop(router)
+        selectMessageLoop()
 
     }
 
     /**
-     * Blocking loop that selects from the rx/tx/ctl channels and handles the messages
-     * appropriately.
+     * Runs a thread that waits for messages on the txChannel and sends them to the remote xmpp service.
      */
-    private fun selectMessageLoop(router: Router) {
+    private fun selectMessageLoop() {
 
-        // message listener
+        thread {
 
-        var isLive = true
+            while(true) {
 
-        while (isLive) {
+                val chatMessage = select(receive(txChannel)).message()
 
-            // TODO can probably flick this to a single event stream now rather than multiple channels
-            // TODO can we do all this just with the ChatRoom add inbound message listener method?
-
-            val sa = select(
-                receive(rxChannel),
-                receive(txChannel)
-            )
-
-            val evt = sa.message()
-
-            if (evt.eventType == ChannelEvent.EventType.CONTROL) {
-
-                val ctlEvt = evt.getPayload()
-
-                if (ControlEvent.Type.QUIT == ctlEvt.type) {
-                    die(Throwable("Unexpected item in the Bagging Area."))
-                    isLive = false
+                if(joinedRooms[chatMessage.from] == null) {
+                    log.warn("Chatroom isn't joined " + chatMessage.from);
                 }
 
-            } else if (ChannelEvent.EventType.XMPP == evt.eventType) {
+                joinedRooms[chatMessage.from]?.sendMessage(chatMessage.body)
 
-                val message = evt.payload
-
-                when (sa.index()) {
-                    0 -> router.triggerHandlersForMessageText(message.body, Response(message.from, txChannel))
-                    1 -> {
-                        val cr = joinedRooms[message.to.local]
-                        if (cr != null) {
-                            cr.sendMessage(message.body)
-                        } else {
-                            log.error("chatroom isn't joined; " + message.to.local)
-                        }
-                    }
-                }
             }
+
         }
+
+        //            val evt = sa.message()
+        //
+        //            if (ChannelEvent.EventType.XMPP == evt.eventType) {
+        //
+        //                val message = evt.payload
+        //
+        //                when (sa.index()) {
+        //                    0 -> router.triggerHandlersForMessageText(message.body, Response(message.from, txChannel))
+        //                }
+        //            }
     }
 
 }

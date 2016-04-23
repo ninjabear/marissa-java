@@ -7,6 +7,7 @@ import co.paralleluniverse.strands.channels.Channel;
 import co.paralleluniverse.strands.channels.Channels;
 import org.junit.Before;
 import org.junit.Test;
+import org.marissa.client.ChatMessage;
 import org.marissa.lib.model.ChannelEvent;
 import rocks.xmpp.core.Jid;
 import rocks.xmpp.core.stanza.model.client.Message;
@@ -21,7 +22,7 @@ public class RouterTest {
 
     private Router r;
     private Timeout defaultTimeout;
-    private Channel<ChannelEvent<Message>> dummy;
+    private Channel<ChatMessage> dummy;
 
     @Before
     public void setUp() throws Exception {
@@ -39,7 +40,7 @@ public class RouterTest {
         r.on("image\\s+me\\s+ninjas", (request, o) -> channel.send("testOn"));
         r.on("some other stuff", (request, c) -> fail("incorrect handler triggered"));
 
-        r.triggerHandlersForMessageText("@Mars image me ninjas", new Response(Jid.valueOf("abc@abc.com"), dummy));
+        r.triggerHandlersForMessageText("@Mars image me ninjas", new Response("abc@abc.com", dummy));
 
         String result;
         int recv = 0;
@@ -66,7 +67,7 @@ public class RouterTest {
         r.whenContains(".*turtles.*", (request, o) -> channel.send("done"));
         r.on("some other stuff", (request, c) -> fail("incorrect handler triggered"));
 
-        r.triggerHandlersForMessageText("the world loves some turtles now and again", new Response(Jid.valueOf("abc@abc.com"), dummy));
+        r.triggerHandlersForMessageText("the world loves some turtles now and again", new Response("", dummy));
 
         String result;
         int recv = 0;

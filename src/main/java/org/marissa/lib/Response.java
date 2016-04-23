@@ -3,37 +3,32 @@ package org.marissa.lib;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.strands.channels.Channel;
-import org.marissa.lib.model.ChannelEvent;
-import rocks.xmpp.core.Jid;
-import rocks.xmpp.core.stanza.model.client.Message;
-
-import static org.marissa.lib.XMPPChannelEventFactory.makeChannelEvent;
+import org.marissa.client.ChatMessage;
 
 public class Response {
 
-    private Jid originator;
-    private Channel<ChannelEvent<Message>> txChannel;
+    private String originator;
+    private Channel<ChatMessage> txChannel;
 
-    public Response(final Jid originator, final Channel<ChannelEvent<Message>> txChannel)
-    {
+    public Response(final String originator, final Channel<ChatMessage> txChannel) {
+
         this.originator = originator;
         this.txChannel = txChannel;
 
-        if (txChannel==null)
+        if (txChannel == null) {
             throw new IllegalArgumentException("tx channel cannot be null here");
+        }
+
     }
 
-    public String getRespondTo()
-    {
-        return originator.toString();
+    public String getRespondTo() {
+        return originator;
     }
-
 
     @Suspendable
-    public void send(final String message){
-        Message toSend = new Message(originator, Message.Type.CHAT, message);
+    public void send(final String message) {
         try {
-            txChannel.send(makeChannelEvent(toSend));
+            txChannel.send(new ChatMessage(this.originator, message));
         } catch (SuspendExecution | InterruptedException ex) {
             throw new IllegalStateException(ex);
         }
