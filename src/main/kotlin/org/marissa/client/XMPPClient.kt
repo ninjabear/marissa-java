@@ -161,7 +161,7 @@ class XMPPClient(val connectionDetails : ConnectionDetails) {
         // send a welcome message TODO: This violates SRP; extract this to a higher level.
 
         joinedRooms.values.forEach { cr ->
-            val names = listOf(cr.getOccupants().filter({ x -> !x.isSelf() }).map({ it -> it.getNick() })).joinToString(",")
+            val names = cr.getOccupants().filter({ x -> !x.isSelf() }).map({ it -> it.getNick() }).joinToString(",")
             cr.sendMessage("Hey " + names)
         }
 
