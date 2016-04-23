@@ -12,9 +12,9 @@ import static org.marissa.lib.XMPPChannelEventFactory.makeChannelEvent;
 public class Response {
 
     private Jid originator;
-    private Channel<ChannelEvent> txChannel;
+    private Channel<ChannelEvent<Message>> txChannel;
 
-    public Response(final Jid originator, final Channel<ChannelEvent> txChannel)
+    public Response(final Jid originator, final Channel<ChannelEvent<Message>> txChannel)
     {
         this.originator = originator;
         this.txChannel = txChannel;

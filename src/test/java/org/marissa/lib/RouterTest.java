@@ -21,7 +21,7 @@ public class RouterTest {
 
     private Router r;
     private Timeout defaultTimeout;
-    private Channel<ChannelEvent> dummy;
+    private Channel<ChannelEvent<Message>> dummy;
 
     @Before
     public void setUp() throws Exception {

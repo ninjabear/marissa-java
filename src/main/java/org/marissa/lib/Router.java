@@ -38,7 +38,7 @@ public class Router {
         routingTable.put(Pattern.compile(pattern), routingEventListener);
     }
 
-    protected void triggerHandlersForMessageText(final String sentText, final Response useResponse)
+    public void triggerHandlersForMessageText(final String sentText, final Response useResponse)
     {
         routingTable.keySet().stream()
                 .filter(key -> key.matcher(sentText).matches())
