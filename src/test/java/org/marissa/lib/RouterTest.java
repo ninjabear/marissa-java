@@ -1,15 +1,12 @@
 package org.marissa.lib;
 
-import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.strands.Timeout;
 import co.paralleluniverse.strands.channels.Channel;
 import co.paralleluniverse.strands.channels.Channels;
 import org.junit.Before;
 import org.junit.Test;
-import org.marissa.lib.model.ChannelEvent;
-import rocks.xmpp.core.Jid;
-import rocks.xmpp.core.stanza.model.client.Message;
+import org.marissa.client.ChatMessage;
 
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -21,11 +18,17 @@ public class RouterTest {
 
     private Router r;
     private Timeout defaultTimeout;
-    private Channel<ChannelEvent> dummy;
+    private Channel<ChatMessage> dummy;
 
     @Before
     public void setUp() throws Exception {
-        r = new Router(Pattern.quote("@Mars"));
+
+        r = new Router(
+            Pattern.quote("@Mars"),
+            Channels.newChannel(0),
+            Channels.newChannel(0)
+        );
+
         defaultTimeout = new Timeout(3000, TimeUnit.MILLISECONDS);
         dummy = Channels.newChannel(0);
     }
@@ -39,7 +42,7 @@ public class RouterTest {
         r.on("image\\s+me\\s+ninjas", (request, o) -> channel.send("testOn"));
         r.on("some other stuff", (request, c) -> fail("incorrect handler triggered"));
 
-        r.triggerHandlersForMessageText("@Mars image me ninjas", new Response(Jid.valueOf("abc@abc.com"), dummy));
+        r.triggerHandlersForMessageText("@Mars image me ninjas", new Response("abc@abc.com", dummy));
 
         String result;
         int recv = 0;
@@ -66,7 +69,7 @@ public class RouterTest {
         r.whenContains(".*turtles.*", (request, o) -> channel.send("done"));
         r.on("some other stuff", (request, c) -> fail("incorrect handler triggered"));
 
-        r.triggerHandlersForMessageText("the world loves some turtles now and again", new Response(Jid.valueOf("abc@abc.com"), dummy));
+        r.triggerHandlersForMessageText("the world loves some turtles now and again", new Response("", dummy));
 
         String result;
         int recv = 0;
